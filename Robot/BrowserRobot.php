@@ -174,6 +174,10 @@ class BrowserRobot
             } catch (\Exception $e) {
                 // Track the last exception so we can re-throw it if we time out
                 $lastException = $e;
+
+                if (stristr($e->getMessage(), 'session deleted because of page crash')) {
+                    throw new \ErrorException("Session crashed!");
+                }
             }
             usleep(100000);
         } while (microtime(true) < $end && !$result);
