@@ -4,6 +4,7 @@
 namespace Zan\BrowserAutomationBundle\Robot;
 
 
+use Behat\Mink\Element\NodeElement;
 use \Behat\Mink\Session;
 use WebDriver\Exception\Timeout;
 
@@ -45,6 +46,42 @@ class BrowserRobot
     public function tearDown()
     {
         $this->browserSession->stop();
+    }
+
+    /**
+     * Clicks on the element with the specified text.
+     *
+     * This text is matched exactly.
+     *
+     * @param      $text
+     * @param null $parentElementExpression
+     */
+    public function click($text, $parentElementExpression = null)
+    {
+        $xpath = sprintf("//*[text()='%s']", $text);
+
+        $this->waitForFunction(function() use ($text, $xpath, $parentElementExpression) {
+            $inElement = null;
+            if ($parentElementExpression) {
+                $inElement = $this->browserSession->getPage()->find('css', $parentElementExpression);
+            }
+            else {
+                $inElement = $this->browserSession->getPage();
+            }
+
+            $elements = $inElement->findAll('xpath', $xpath);
+
+            if (count($elements) > 1) {
+                throw new \InvalidArgumentException(sprintf('Text "%s" matched multiple elements', $text));
+            }
+
+            /** @var NodeElement $element */
+            $element = $elements[0];
+            $element->click();
+
+            // Found and clicked element, return true
+            return true;
+        }, $this->getJavascriptExecutionTimeout());
     }
 
     public function evaluateScript($javascript)
