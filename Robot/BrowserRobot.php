@@ -29,11 +29,20 @@ class BrowserRobot
      */
     protected $javascriptExecutionTimeout;
 
+    /**
+     * How long (in microseconds) to wait while polling when checking for elements,
+     * javascript values, etc.
+     *
+     * @var int microseconds
+     */
+    protected $loopDelayUs;
+
     public function __construct(Session $browserSession)
     {
         $this->browserSession = $browserSession;
 
         $this->javascriptExecutionTimeout = 30;
+        $this->loopDelayUs = 250000;
 
         $this->id = uniqid();
     }
@@ -142,6 +151,7 @@ class BrowserRobot
             } catch (\Exception $e) {
                 // Track the last exception so we can re-throw it if we time out
                 $lastException = $e;
+                usleep($this->loopDelayUs);
             }
             usleep(100000);
         } while (microtime(true) < $end && 'ZAN_BROWSER_ROBOT_UNCHANGED_VALUE' == $result);
@@ -178,7 +188,7 @@ class BrowserRobot
 
         do {
             $result = $this->browserSession->evaluateScript($js);
-            usleep(100000);
+            usleep($this->loopDelayUs);
         } while (microtime(true) < $end && 'ZAN_BROWSER_ROBOT_RETRY_EXCEPTION' == $result);
 
         if (microtime(true) >= $end) {
@@ -216,7 +226,7 @@ class BrowserRobot
                     throw new \ErrorException("Session crashed!");
                 }
             }
-            usleep(100000);
+            usleep($this->loopDelayUs);
         } while (microtime(true) < $end && !$result);
 
         if (microtime(true) >= $end) {
@@ -261,7 +271,7 @@ class BrowserRobot
                 // Track the last exception so we can re-throw it if we time out
                 $lastException = $e;
             }
-            usleep(100000);
+            usleep($this->loopDelayUs);
         } while (microtime(true) < $end && !$result);
 
         if (microtime(true) >= $end) {
