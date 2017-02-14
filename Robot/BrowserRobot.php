@@ -7,6 +7,7 @@ namespace Zan\BrowserAutomationBundle\Robot;
 use Behat\Mink\Element\NodeElement;
 use \Behat\Mink\Session;
 use WebDriver\Exception\Timeout;
+use Zan\BrowserAutomationBundle\JavaScript\JavascriptUtils;
 
 class BrowserRobot
 {
@@ -294,7 +295,7 @@ class BrowserRobot
      */
     protected function escapeJavascriptStringFunctionArgument($argument)
     {
-        return sprintf("'%s'", str_replace("'", '\'', $argument));
+        return JavascriptUtils::escapeStringArgument($argument);
     }
 
     /**
