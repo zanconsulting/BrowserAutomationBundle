@@ -30,7 +30,7 @@ trait ExtJsAwareBrowserTrait
         $componentGlobalId = $this->javascriptValue($js);
 
         if (!$componentGlobalId) {
-            throw new \InvalidArgumentException("Could not find ID for component from query %s", $query);
+            throw new \InvalidArgumentException(sprintf("Could not find ID for component from query %s", $query));
         }
 
         $component = $this->browserSession->getPage()->find('css', sprintf('#%s', $componentGlobalId));
@@ -41,7 +41,7 @@ trait ExtJsAwareBrowserTrait
     {
         $this->waitForExtComponent($query);
 
-        $componentJs = sprintf("Ext.ComponentQuery.query(%s)[0]", $this->escapeJavascriptStringFunctionArgument($query));
+        $componentJs = $this->buildFindComponentJs($query);
 
         $isComboBox = $this->immediateJavascriptValue(sprintf('%s instanceof Ext.form.field.ComboBox', $componentJs));
 
@@ -61,5 +61,33 @@ trait ExtJsAwareBrowserTrait
                 $this->escapeJavascriptStringFunctionArgument($text)
             ));
         }
+    }
+
+    public function setExtValue($query, $value)
+    {
+        $findComponentJs = $this->buildFindComponentJs($query);
+
+        $setValue = $this->resolveSetValueToEscapedValue($query, $value);
+
+        $this->waitForExtComponent($query);
+
+        $this->javascript(sprintf('%s.setValue(%s)',
+            $findComponentJs,
+            $setValue
+        ));
+    }
+
+    protected function resolveSetValueToEscapedValue($query, $value)
+    {
+        if ($value instanceof \DateTime) {
+            return sprintf("Ext.Date.parse('%s', 'c')", $value->format('c'));
+        }
+
+        return $this->escapeJavascriptStringFunctionArgument($value);
+    }
+
+    private function buildFindComponentJs($query)
+    {
+        return sprintf("Ext.ComponentQuery.query(%s)[0]", $this->escapeJavascriptStringFunctionArgument($query));
     }
 }
