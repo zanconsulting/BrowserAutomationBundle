@@ -200,6 +200,32 @@ class BrowserRobot
     }
 
     /**
+     * @param $variableName
+     * @return mixed
+     */
+    public function getTestVariableValue($variableName)
+    {
+        $value = null;
+
+        $this->waitForFunction(function() use ($variableName, &$value) {
+            $readValue = $this->javascriptValue(
+                sprintf("window.ZAN_BROWSERTEST_VARIABLES[%s]",
+                $this->escapeJavascriptStringFunctionArgument($variableName))
+            );
+
+            // Assume empty value means its not set yet
+            if (!$readValue) return false;
+
+            else {
+                $value = $readValue;
+                return true;
+            }
+        });
+
+        return $value;
+    }
+
+    /**
      * Waits for the given javascript $expression to return a true value
      * @param      $expression
      * @param null $timeout
