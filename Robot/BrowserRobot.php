@@ -81,6 +81,9 @@ class BrowserRobot
 
             $elements = $inElement->findAll('xpath', $xpath);
 
+            // Nothing found
+            if (!$elements) return false;
+
             if (count($elements) > 1) {
                 throw new \InvalidArgumentException(sprintf('Text "%s" matched multiple elements', $text));
             }
@@ -115,9 +118,15 @@ class BrowserRobot
         // of the value
         $readValueJs = sprintf("return JSON.stringify(%s)", $expression);
 
-        $json = $this->browserSession->evaluateScript($readValueJs);
+        try {
+            $json = $this->browserSession->evaluateScript($readValueJs);
+        }
+        catch (\Exception $ex) {
+            throw new \Exception(sprintf("%s\n\nwhile evaluating:\n------------------------------------\n%s\n------------------------------------\n", $ex->getMessage(), $readValueJs));
+        }
 
-        //printf("VALUE: %s -> %s\n", $expression, print_r(json_decode($json, true), true));
+
+        //fwrite(STDERR, sprintf("VALUE: %s -> %s -> %s\n", $expression, $json, print_r(json_decode($json, true), true)));
         return json_decode($json, true);
     }
 
@@ -139,7 +148,9 @@ class BrowserRobot
     {
         if (null === $timeout) $timeout = $this->javascriptExecutionTimeout;
 
-        //$js = sprintf("function() { try { return (typeof %s !== 'undefined') ? true : false; } catch(ex) { return false; } }()", $expression);
+        // Clean up expression
+        if (substr($expression, -1) == ';') $expression = substr($expression, 0, -1);
+
         $start = microtime(true);
         $end = $start + $timeout;
 
@@ -154,8 +165,7 @@ class BrowserRobot
                 $lastException = $e;
                 usleep($this->loopDelayUs);
             }
-            usleep(100000);
-        } while (microtime(true) < $end && 'ZAN_BROWSER_ROBOT_UNCHANGED_VALUE' == $result);
+        } while (microtime(true) < $end && 'ZAN_BROWSER_ROBOT_UNCHANGED_VALUE' === $result);
 
         if (microtime(true) >= $end) {
             // If we timed out with an exception throw that instead
@@ -168,7 +178,7 @@ class BrowserRobot
             }
         }
 
-        return $this->immediateJavascriptValue($expression);
+        return $result;
     }
 
     /**
@@ -188,6 +198,7 @@ class BrowserRobot
         $end = $start + $timeout;
 
         do {
+            //printf("--------------------\n%s\n--------------------\n", $js);
             $result = $this->browserSession->evaluateScript($js);
             usleep($this->loopDelayUs);
         } while (microtime(true) < $end && 'ZAN_BROWSER_ROBOT_RETRY_EXCEPTION' == $result);
