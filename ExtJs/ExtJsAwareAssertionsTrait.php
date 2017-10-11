@@ -5,7 +5,6 @@ namespace Zan\BrowserAutomationBundle\ExtJs;
 
 
 use Zan\BrowserAutomationBundle\JavaScript\JavascriptUtils;
-use Zan\BrowserAutomationBundle\Robot\BrowserRobot;
 
 trait ExtJsAwareAssertionsTrait
 {
