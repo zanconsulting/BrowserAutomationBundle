@@ -5,7 +5,7 @@ namespace Zan\BrowserAutomationBundle\Robot;
 
 
 use Behat\Mink\Element\NodeElement;
-use Behat\Mink\Session;
+use \Behat\Mink\Session;
 use WebDriver\Exception\Timeout;
 use Zan\BrowserAutomationBundle\JavaScript\JavascriptUtils;
 
@@ -70,7 +70,18 @@ class BrowserRobot
     {
         $xpath = sprintf("//*[text()='%s']", $text);
 
-        $this->waitForFunction(function() use ($text, $xpath, $parentElementExpression) {
+        $this->clickXpath($xpath);
+    }
+
+    /**
+     * @param      $xpath
+     * @param null $parentElementExpression
+     * @throws Timeout
+     * @throws \Exception
+     */
+    public function clickXpath($xpath, $parentElementExpression = null)
+    {
+        $this->waitForFunction(function() use ($xpath, $parentElementExpression) {
             $inElement = null;
             if ($parentElementExpression) {
                 $inElement = $this->browserSession->getPage()->find('css', $parentElementExpression);
@@ -85,7 +96,7 @@ class BrowserRobot
             if (!$elements) return false;
 
             if (count($elements) > 1) {
-                throw new \InvalidArgumentException(sprintf('Text "%s" matched multiple elements', $text));
+                throw new \InvalidArgumentException(sprintf('Xpath expression "%s" matched multiple elements', $xpath));
             }
 
             /** @var NodeElement $element */
@@ -292,6 +303,17 @@ class BrowserRobot
 
             return $inElement->hasContent($text);
         }, $timeout);
+    }
+
+    /**
+     * @param      $title
+     * @param null $timeout
+     * @throws Timeout
+     * @throws null
+     */
+    public function waitForPageTitle($title, $timeout = null)
+    {
+        $this->waitForTrue(sprintf('document.title == %s', JavascriptUtils::escapeStringArgument($title)), $timeout);
     }
 
     public function waitForFunction($function, $timeout = null) {
